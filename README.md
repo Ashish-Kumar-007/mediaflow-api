@@ -13,6 +13,21 @@ A robust, production-ready backend API designed to handle heavy media workflows,
 
 ---
 
+## The Core Problem Solved: HTTP Timeouts & Server Blocking
+
+Imagine a standard web server where a user uploads a large 4K video and clicks "Compress." Compressing that video takes 5 minutes. If the API tries to compress the video right then and there, the HTTP request will stay open for 5 minutes. 
+1. The user's web browser will likely give up and throw a "Network Timeout" error after 30 seconds.
+2. While the server is busy crunching that video, it is "blocked"—meaning it cannot respond to any other users trying to log in or browse the site. The whole app slows down or crashes.
+
+**This architecture completely decouples *receiving* requests from *processing* requests:**
+1. **Instant Response:** When a user clicks "Compress", the API instantly replies, *"Got it, you're Job #123,"* and closes the HTTP request immediately. No timeouts.
+2. **Asynchronous Queue:** It drops a ticket into the **Redis Queue**.
+3. **Background Workers:** A completely separate server (the `worker.js`) quietly picks up the heavy processing in the background, leaving the main API lightning-fast and ready to handle thousands of other users simultaneously.
+
+Combined with **Object Storage (S3)** (so the database isn't clogged with massive video files), this solves the two major bottlenecks of scaling a media application.
+
+---
+
 ## Architecture & Data Flow
 
 Here is the complete, step-by-step flow of how data moves through the project:
